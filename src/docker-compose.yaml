@@ -1,0 +1,43 @@
+#Versão
+version: '1.0'
+services:
+  rotten:
+    image: daniel10souza/rotten-potatoes-ms:v1
+    build:
+      dockerfile: ./Dockerfile
+      context: ./
+#Declarar as database dos dois moveis e review
+
+  database-movies:
+    image: mongo:4.4.6
+    env_file: db-movies/database.conf
+    volumes:
+      - db_volume-movies:/data/db
+
+  database-review:
+    image: postgres:3.14
+    env_file: db-review/database.conf
+    volumes:
+      - db_volume-review:/data/db
+
+#Declarar as aplicações
+api-review:
+  image: daniel10souza/review:v1
+  env_file: ./src/services/review.py
+  ports:
+     - 8282:8282
+  volumes:
+     - ./src/app:/src/app/
+
+api-movie:
+  image: daniel10souza/movie:v1
+  env_file: ./src/services/movie.py
+  ports:
+     - 8181:8181
+  volumes:
+     - ./src/app:/src/app/
+
+
+volumes:
+  db_volume-movies:
+  db_volume-review:
