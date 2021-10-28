@@ -1,62 +1,86 @@
-#Versão
+#Versao
+version: '3.9'
+#Volumes
+volumes:
+  db_volume-movies:
+  db_volume-review:
+#Redes  
 networks: 
   produto_net:
     driver: bridge
-version: '3.5'
+    
+#Declarar as database dos dois moveis e review
 services:
-  rotten:
+  rotten-potatoes:
     image: daniel10souza/rotten-potatoes-ms:v1
     build:
       dockerfile: ./Dockerfile
       context: ./
     networks:
      - produto_net      
-#Declarar as database dos dois moveis e review
+#Dependências do Mongodb
+    depends_on: 
+     - database-movies
+    environment:
+      MONGODB_DB: admin
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      MONGODB_USERNAME: mongouser
+      MONGODB_PASSWORD: mongopwd
+      MONGODB_URI: mongodb://mongouser:mongopwd@mongodb:27017/admin     
+      
+  database-movies:
+    image: mongo:4.4.6
+    ports:
+     - 27017:27017
+    networks:
+     - produto_net
+    volumes:
+      - db_volume-movies:/data/db  
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongouser
+      MONGO_INITDB_ROOT_PASSWORD: mongopwd
 
   database-review:
     image: postgres:14.0
-    env_file: db-review/database.conf
+    ports:
+     - 5432:5432
     networks:
      - produto_net
     volumes:
       - db_volume-review:/data/db
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: Pg@123;
+      POSTGRES_HOST: pgdb
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: postgredb
+      ConnectionStrings__MyConnection: Host=postgredb;Database=pguser;Username=pguser;Password=Pg@123;
 
-  database-movies:
-    image: mongo:4.4.6
-    env_file: db-movies/database.conf
-    networks:
-     - produto_net
-    volumes:
-      - db_volume-movies:/data/db      
-
-#Dependências
-
-    depends_on: 
-     - database-review
 
   #Declarar as aplicações
   api-review:
-    image: daniel10souza/review:v1
-    env_file: env-review/env.conf
+    image: daniel10souza/review:v3
+    build:
+      dockerfile: ./Dockerfile
+      context: ./
     ports:
-      - 8282:8282
-    volumes:
-      - ./src/app:/src/app/
-
-    depends_on: 
-     - database-movies
-    
-  api-movie:
-    image: daniel10souza/movie:v1
-    env_file: env-movies/env.conf
+     - 8282:8282  
     networks:
-     - produto_net    
+     - produto_net 
+    environment: 
+      URL_API_REVIEW: http://review:8282       
+
+
+  
+  api-movie:
+    image: daniel10souza/movie:v4
+    build:
+      dockerfile: ./Dockerfile
+      context: ./
     ports:
-      - 8181:8181
-    volumes:
-      - ./src/app:/src/app/
-
-
-volumes:
-  db_volume-movies:
-  db_volume-review:
+     - 8181:8181       
+    networks:
+     - produto_net
+    environment: 
+      URL_API_MOVIE: http://movies:8181       
