@@ -12,12 +12,15 @@ networks:
 #Declarar as database dos dois moveis e review
 services:
   rotten-potatoes:
-    image: daniel10souza/rotten-potatoes-ms:v1
+    image: daniel10souza/rotten-potatoes-ms:v6
     build:
       dockerfile: ./Dockerfile
       context: ./
     networks:
-     - produto_net      
+     - produto_net    
+    environment: 
+      REVIEW_SERVICE_URI: http://review:8282 
+      MOVIE_SERVICE_URI: http://movies:8181       
 #Dependências do Mongodb
     depends_on: 
      - database-movies
@@ -69,7 +72,7 @@ services:
     networks:
      - produto_net 
     environment: 
-      URL_API_REVIEW: http://review:8282       
+      REVIEW_SERVICE_URI: http://review:8282      
 
 
   
@@ -83,4 +86,4 @@ services:
     networks:
      - produto_net
     environment: 
-      URL_API_MOVIE: http://movies:8181       
+      MOVIE_SERVICE_URI: http://movies:8181
