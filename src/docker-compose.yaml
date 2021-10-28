@@ -30,7 +30,7 @@ services:
       MONGODB_PORT: 27017
       MONGODB_USERNAME: mongouser
       MONGODB_PASSWORD: mongopwd
-      MONGODB_URI: mongodb://mongouser:mongopwd@mongodb:27017/admin     
+      MONGODB_URI: database-movies://mongouser:mongopwd@database-movies:27017/admin     
       
   database-movies:
     image: mongo:4.4.6
