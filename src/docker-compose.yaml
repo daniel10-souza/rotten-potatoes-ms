@@ -1,89 +1,68 @@
-#Versao
-version: '3.9'
-#Volumes
+version: '3.8'
+#Volumes fixos
 volumes:
-  db_volume-movies:
-  db_volume-review:
-#Redes  
-networks: 
+  mongo_vol:
+  post_vol:
+#rede cominicação
+networks:
   produto_net:
     driver: bridge
-    
-#Declarar as database dos dois moveis e review
+
+#Services de banco
 services:
-  rotten-potatoes:
-    image: daniel10souza/rotten-potatoes-ms:v7
-    build:
-      dockerfile: ./Dockerfile
-      context: ./
+  mongo_db:
+    image: mongo:4.4.3
     networks:
-     - produto_net    
-    environment: 
-      REVIEW_SERVICE_URI: http://review:8282 
-      MOVIE_SERVICE_URI: http://movies:8181       
-#Dependências do Mongodb
-    depends_on: 
-     - database-movies
-    environment:
-      MONGODB_DB: admin
-      MONGODB_HOST: database-movies
-      MONGODB_PORT: 27017
-      MONGODB_USERNAME: mongouser
-      MONGODB_PASSWORD: mongopwd
-      MONGODB_URI: database-movies://mongouser:mongopwd@database-movies:27017/admin     
-      
-  database-movies:
-    image: mongo:4.4.6
-    ports:
-     - 27017:27017
-    networks:
-     - produto_net
+      - produto_net
     volumes:
-      - db_volume-movies:/data/db  
+      - mongo_vol:/base/db
     environment:
+      MONGODB_HOST: mongo_db
       MONGO_INITDB_ROOT_USERNAME: mongouser
       MONGO_INITDB_ROOT_PASSWORD: mongopwd
 
-  database-review:
-    image: postgres:14.0
-    ports:
-     - 5432:5432
+  post_db:
+    image: postgres:latest
     networks:
-     - produto_net
+       - produto_net
     volumes:
-      - db_volume-review:/data/db
+      - post_vol:/vol/postgresql/data
     environment:
+      POSTGRES_DB: pgDB
       POSTGRES_USER: pguser
-      POSTGRES_PASSWORD: Pg@123;
-      POSTGRES_HOST: database-review
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: postgredb
-      ConnectionStrings__MyConnection: Host=postgredb;Database=pguser;Username=pguser;Password=Pg@123;
+      POSTGRES_PASSWORD: pgsenha
 
-
-  #Declarar as aplicações
-  review:
-    image: daniel10souza/review:v3
-    build:
-      dockerfile: ./Dockerfile
-      context: ./
+#Aplicação
+  api:
+    image: daniel10souza/rotten-potatoes-ms:v2
     ports:
-     - 8282:8282  
+      - 8080:8080
     networks:
-     - produto_net 
-#    environment: 
-#      REVIEW_SERVICE_URI: http://review:8282      
+      - produto_net
+    depends_on:
+      - movies
+      - review
+    environment:
+      MONGODB_HOST: mongo_db
+      MONGODB_USERNAME: mongouser
+      MONGODB_PASSWORD: mongopwd
+      MOVIE_SERVICE_URI: http://movies:8181/
+      REVIEW_SERVICE_URI: http://review:80/
 
-
-  
   movies:
     image: daniel10souza/movies:v4
-    build:
-      dockerfile: ./Dockerfile
-      context: ./
-    ports:
-     - 8181:8181       
     networks:
-     - produto_net
-#    environment: 
-#      MOVIE_SERVICE_URI: http://movies:8181
+      - produto_net
+    depends_on:
+      - mongo_db
+    environment:
+      MONGODB_URI: mongo_db://mongouser:mongopwd@mongo_db:27017/admin
+
+  review:
+    image: daniel10souza/review:v1
+    networks:
+      - produto_net
+    depends_on:
+      - post_db
+    environment:
+      ConnectionStrings__MyConnection: Host=post_db;Database=pgDB;Username=pguser;Password=pgsenha;

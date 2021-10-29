@@ -89,4 +89,4 @@ else:
 
 @app.route('/img/<path:path>')
 def send_js(path):
-    return send_file('static/imagensfilme/' + str(path))
+    return send_file('static/' + str(path))
