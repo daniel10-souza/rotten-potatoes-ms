@@ -8,7 +8,7 @@ networks:
   produto_net:
     driver: bridge
 
-#Services de banco
+#Services de banco mongo e postgre
 services:
   mongodb:
     image: mongo:4.4.3
@@ -32,7 +32,7 @@ services:
       POSTGRES_USER: pguser
       POSTGRES_PASSWORD: pgsenha
 
-#Aplicação
+#Aplicações rotten | movies | review
   api:
     image: daniel10souza/rotten-potatoes-ms:v4
     ports:
