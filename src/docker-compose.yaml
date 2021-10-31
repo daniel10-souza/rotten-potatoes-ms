@@ -10,14 +10,14 @@ networks:
 
 #Services de banco
 services:
-  mongo_db:
+  mongodb:
     image: mongo:4.4.3
     networks:
       - produto_net
     volumes:
       - mongo_vol:/base/db
     environment:
-      MONGODB_HOST: mongo_db
+      MONGODB_HOST: mongodb
       MONGO_INITDB_ROOT_USERNAME: mongouser
       MONGO_INITDB_ROOT_PASSWORD: mongopwd
 
@@ -34,7 +34,7 @@ services:
 
 #Aplicação
   api:
-    image: daniel10souza/rotten-potatoes-ms:v2
+    image: daniel10souza/rotten-potatoes-ms:v4
     ports:
       - 8080:8080
     networks:
@@ -43,23 +43,25 @@ services:
       - movies
       - review
     environment:
-      MONGODB_HOST: mongo_db
+      MONGODB_HOST: mongodb
       MONGODB_USERNAME: mongouser
       MONGODB_PASSWORD: mongopwd
-      MOVIE_SERVICE_URI: http://movies:8181/
-      REVIEW_SERVICE_URI: http://review:80/
+      MOVIE_SERVICE_URI: http://movies:8181
+      REVIEW_SERVICE_URI: http://review:80
 
   movies:
-    image: daniel10souza/movies:v4
+    image: daniel10souza/movie:v5
     networks:
       - produto_net
     depends_on:
-      - mongo_db
+      - mongodb
     environment:
-      MONGODB_URI: mongo_db://mongouser:mongopwd@mongo_db:27017/admin
+      MONGODB_URI: mongodb://mongouser:mongopwd@mongodb:27017/admin
 
   review:
-    image: daniel10souza/review:v1
+    image: daniel10souza/review:v3
+    ports:
+    - 8282:80
     networks:
       - produto_net
     depends_on:
